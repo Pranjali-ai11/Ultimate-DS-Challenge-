@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String            @id @db.VarChar(191)
+  name           String            @db.VarChar(80)
+  email          String            @unique @db.VarChar(254)
+  password_hash  String            @db.VarChar(255)
+  avatar         String            @default("avatar-1") @db.VarChar(80)
+  title          String            @default("Novice Architect") @db.VarChar(60)
+  bio            String            @default("Exploring data structures and algorithms.") @db.VarChar(500)
+  created_at     DateTime          @default(now()) @db.DateTime(3)
+  progress       UserProgress?
+  attempts       ChallengeAttempt[]
+  achievements   UserAchievement[]
+  completions    ChallengeCompletion[]
+
+  @@index([created_at])
+  @@map("users")
+}
+
+model UserProgress {
+  id                   String   @id @db.VarChar(191)
+  user_id              String   @unique @db.VarChar(191)
+  level                Int      @default(1)
+  unlocked_level       Int      @default(1)
+  xp                   Int      @default(0)
+  score                Int      @default(0)
+  completed_challenges Int      @default(0)
+  accuracy             Float    @default(0)
+  streak               Int      @default(0)
+  last_active          DateTime @default(now()) @db.DateTime(3)
+  user                 User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("user_progress")
+}
+
+model Challenge {
+  id          String   @id @db.VarChar(191)
+  slug        String   @unique @db.VarChar(191)
+  level       Int
+  title       String   @db.VarChar(255)
+  reward_xp   Int
+  payload     Json
+  attempts    ChallengeAttempt[]
+  completions ChallengeCompletion[]
+
+  @@index([level, id])
+  @@map("challenges")
+}
+
+model ChallengeAttempt {
+  id                  String   @id @db.VarChar(191)
+  user_id             String   @db.VarChar(191)
+  challenge_id        String   @db.VarChar(191)
+  selected_structures Json
+  final_design        Json?
+  score               Int
+  correctness_score   Int
+  performance_score   Int?
+  memory_score        Int?
+  complexity_score    Int?
+  simplicity_score    Int?
+  explanation_score   Int?
+  feedback            Json?
+  submission_id       String?  @db.VarChar(191)
+  status              String   @db.VarChar(16)
+  completed_at        DateTime @db.DateTime(3)
+  reward_awarded      Boolean? @default(false)
+  user                User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  challenge           Challenge @relation(fields: [challenge_id], references: [id], onDelete: Restrict)
+
+  @@index([user_id, completed_at])
+  @@index([user_id, challenge_id, status])
+  @@index([challenge_id, completed_at])
+  @@unique([user_id, submission_id, challenge_id])
+  @@map("challenge_attempts")
+}
+
+model Achievement {
+  code        String            @id @db.VarChar(80)
+  name        String            @db.VarChar(120)
+  description String            @db.VarChar(500)
+  icon        String            @db.VarChar(80)
+  requirement String            @db.VarChar(500)
+  xp_bonus    Int               @default(50)
+  users       UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id             String      @id @db.VarChar(191)
+  user_id        String      @db.VarChar(191)
+  achievement_id String      @db.VarChar(80)
+  unlocked_at    DateTime    @db.DateTime(3)
+  user           User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  achievement    Achievement @relation(fields: [achievement_id], references: [code], onDelete: Restrict)
+
+  @@unique([user_id, achievement_id])
+  @@index([achievement_id, unlocked_at])
+  @@map("user_achievements")
+}
+
+model RevokedToken {
+  token_id   String   @id @db.VarChar(191)
+  expires_at DateTime @db.DateTime(3)
+
+  @@index([expires_at])
+  @@map("revoked_tokens")
+}
+
+model ChallengeCompletion {
+  id           String   @id @db.VarChar(191)
+  user_id      String   @db.VarChar(191)
+  challenge_id String   @db.VarChar(191)
+  completed_at DateTime @db.DateTime(3)
+  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  challenge    Challenge @relation(fields: [challenge_id], references: [id], onDelete: Restrict)
+
+  @@unique([user_id, challenge_id])
+  @@index([challenge_id, completed_at])
+  @@map("challenge_completions")
+}
