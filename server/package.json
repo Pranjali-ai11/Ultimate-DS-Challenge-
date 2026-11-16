@@ -12,6 +12,8 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:import:json": "tsx src/scripts/import-json.ts",
+    "seed:sample": "tsx src/scripts/seedSampleUsers.ts",
+    "verify:sample": "tsx src/scripts/verifySampleUsers.ts",
     "report:topics": "tsx src/scripts/generatePhase1TopicCoverage.ts",
     "test": "tsx --test \"src/**/*.test.ts\"",
     "prisma:generate": "prisma generate",
